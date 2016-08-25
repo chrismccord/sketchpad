@@ -1,0 +1,10 @@
+<div class="row">
+  <div class="col-sm-6 col-sm-offset-3">
+    <%= form_for @conn, page_path(@conn, :signin), [as: :user], fn f -> %>
+      <%= text_input f, :username, placeholder: "Name", class: "form-control" %>
+      <br/>
+      <button type="submit" class="btn btn-primary col-sm-12">Sketch!</button>
+    <% end %>
+    </form>
+  </div>
+</div>

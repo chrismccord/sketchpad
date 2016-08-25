@@ -1,3 +1,29 @@
 <div class="row">
-  <div id="sketchpad"></div>
+  <div class="btn-group">
+    <button class="btn btn-primary"><%= @user_id %></button>
+    <button id="clear-button" type="button" class="btn btn-default">clear</button>
+    <button id="export-button" type="button" class="btn btn-default">export png</button>
+  </div>
+</div>
+
+<div class="row">
+  <div id="sketchpad" class="col-sm-9"></div>
+
+  <div class="col-sm-3">
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Sketchpad Chat</h3>
+      </div>
+      <div id="messages" class="panel-body">
+      </div>
+      <div class="panel-footer">
+        <input id="message-input"
+               class="form-control"
+               type="text"
+               placeholder="Send..."/>
+      </div>
+    </div>
+
+  </div>
 </div>

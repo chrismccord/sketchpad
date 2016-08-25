@@ -17,10 +17,6 @@ defmodule Sketchpad.Router do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
+    post "/signin", PageController, :signin
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", Sketchpad do
-  #   pipe_through :api
-  # end
 end

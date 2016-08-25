@@ -20,16 +20,24 @@ function mergeObjects(obj1, obj2){
 }
 
 
-class Sketchpad {
+export function sanitize(str){
+  let div = document.createElement("div")
+  div.appendChild(document.createTextNode(str))
+  return div.innerHTML
+}
 
-  constructor(el, opts){
+
+export class Sketchpad {
+
+  constructor(el, userId, opts){
     if(!el){ throw new Error('Must pass in a container element') }
 
+    this.el = el
+    this.userId = userId
     this.opts = opts || {}
     this.opts.aspectRatio = this.opts.aspectRatio || 1
-    this.opts.width = this.opts.width || el.clientWidth
+    this.opts.width = this.opts.width || this.el.clientWidth
     this.opts.height = this.opts.height || this.opts.width * this.opts.aspectRatio
-    this.opts.samplePoints = this.opts.samplePoints || 10
     this.opts.line = mergeObjects({
       color: '#000',
       size: 5,
@@ -38,8 +46,11 @@ class Sketchpad {
       miterLimit: 10
     }, this.opts.line);
 
-    this.users = {local: this.buildUser("local", this.opts.data)}
-    this.events = {};
+    this.users = mergeObjects(this.buildDefaultUsers(this.userId), this.opts.data)
+    this.events = {}
+    this.eventBuffer = null
+    this.flushEventsEvery = 100
+    this.eventTimer = setInterval(() => this.flushEvents(), this.flushEventsEvery)
     this.undos = [];
 
     // Boolean indicating if currently drawing
@@ -51,7 +62,7 @@ class Sketchpad {
     this.resizeTimer = null
     window.onresize = () => {
       clearTimeout(this.resizeTimer)
-      this.resizeTimer = setTimeout(() => this.resize(el.clientWidth), 100)
+      this.resizeTimer = setTimeout(() => this.resize(this.el.clientWidth), 100)
     }
     el.appendChild(this.canvas);
     this.context = this.canvas.getContext('2d');
@@ -63,10 +74,26 @@ class Sketchpad {
     this.canvas.addEventListener('mouseup', e => this.endLine(e));
     this.canvas.addEventListener('mouseleave', e => this.endLine(e));
     this.canvas.addEventListener('touchend', e => this.endLine(e));
+    this.fullRedraw()
+  }
+
+  flushEvents(){
+    if(this.eventBuffer){
+      console.log(this.eventBuffer)
+      this.getEvents("stroke").forEach(cb => cb(this.eventBuffer.stroke))
+      if(this.sketching){ this.startLine(this.eventBuffer.event) }
+      this.eventBuffer = null
+    }
   }
 
   buildUser(userId, data){
     return data || {id: userId, strokes: [], lastPaintedIndex: 0}
+  }
+
+  buildDefaultUsers(userId){
+    let defaults = {}
+    defaults[userId] = this.buildUser(userId)
+    return defaults
   }
 
   setCanvasSize(width, height) {
@@ -85,10 +112,11 @@ class Sketchpad {
 
   // Returns a points x,y locations relative to the size of the canvase
   getPointRelativeToCanvas(point){
+    let precisionFactor = 100000
     let canvasSize = this.getCanvasSize();
     return({
-      x: point.x / canvasSize.width,
-      y: point.y / canvasSize.height
+      x: Math.round((point.x / canvasSize.width) * precisionFactor) / precisionFactor,
+      y: Math.round((point.y / canvasSize.height) * precisionFactor)/ precisionFactor
     });
   }
 
@@ -118,11 +146,11 @@ class Sketchpad {
    * Since points are stored relative to the size of the canvas
    * this takes a point and converts it to actual x, y distances in the canvas
   */
-  normalizePoint(point){
+  normalizePoint(x, y){
     var canvasSize = this.getCanvasSize();
     return {
-      x: point.x * canvasSize.width,
-      y: point.y * canvasSize.height
+      x: x * canvasSize.width,
+      y: y * canvasSize.height
     };
   }
 
@@ -138,9 +166,9 @@ class Sketchpad {
   // Draw a stroke on the canvas
   drawStroke(stroke) {
     this.context.beginPath();
-    for (let j = 0; j < stroke.points.length - 1; j++) {
-      let start = this.normalizePoint(stroke.points[j]);
-      let end = this.normalizePoint(stroke.points[j + 1]);
+    for (let i = 0; i < stroke.points.length - 1; i = i + 2) {
+      let start = this.normalizePoint(stroke.points[i], stroke.points[i + 1]);
+      let end = this.normalizePoint(stroke.points[i + 2], stroke.points[i + 3]);
 
       this.context.moveTo(start.x, start.y);
       this.context.lineTo(end.x, end.y);
@@ -171,10 +199,17 @@ class Sketchpad {
   redrawUser(userId){
     let user = this.users[userId]
     let {strokes, lastPaintedIndex} = user
-    for(let i = lastPaintedIndex; i < strokes.length; i++) {
+    let length = strokes.length
+    if(!lastPaintedIndex){ lastPaintedIndex = 0 }
+
+    for(let i = lastPaintedIndex; i < length; i++) {
       this.drawStroke(strokes[i])
     }
-    user.lastPaintedIndex = strokes.length - 1
+    if(length === 0){
+      user.lastPaintedIndex = 0
+    } else {
+      user.lastPaintedIndex = length - 1
+    }
   }
 
   // On mouse down, create a new stroke with a start location
@@ -184,8 +219,8 @@ class Sketchpad {
     this.undos = [];
 
     let cursor = this.getCursorRelativeToCanvas(e);
-    this.users["local"].strokes.push({
-      points: [cursor],
+    this.users[this.userId].strokes.push({
+      points: [cursor.x, cursor.y],
       color: this.opts.line.color,
       size: this.getLineSizeRelativeToCanvas(this.opts.line.size),
       cap: this.opts.line.cap,
@@ -200,15 +235,12 @@ class Sketchpad {
     e.preventDefault();
 
     let cursor = this.getCursorRelativeToCanvas(e)
-    let point = {x: cursor.x, y: cursor.y}
-    let lastStroke = this.lastStroke("local")
+    let lastStroke = this.lastStroke(this.userId)
     let points = lastStroke.points
-    points.push(point)
-    this.redrawUser("local")
-    if(points.length > this.opts.samplePoints){
-      this.getEvents("stroke").forEach(cb => cb(lastStroke))
-      this.startLine(e)
-    }
+    points.push(cursor.x)
+    points.push(cursor.y)
+    this.redrawUser(this.userId)
+    this.eventBuffer = {stroke: lastStroke, event: e}
   }
 
   lastStroke(userId){
@@ -220,33 +252,37 @@ class Sketchpad {
     e.preventDefault();
 
     this.sketching = false;
-    let lastStroke = this.lastStroke("local")
+    let lastStroke = this.lastStroke(this.userId)
     this.getEvents("stroke").forEach(cb => cb(lastStroke))
 
     // touchend events do not have a cursor position
     if(this.isTouchEvent(e)){ return }
 
     let cursor = this.getCursorRelativeToCanvas(e)
-    lastStroke.points.push({x: cursor.x, y: cursor.y})
-    this.redrawUser("local")
+    lastStroke.points.push(cursor.x)
+    lastStroke.points.push(cursor.y)
+    this.redrawUser(this.userId)
   }
 
-  undo(){ if(this.strokes.local.length === 0){ return }
-    this.undos.push(this.strokes.local.pop());
-    this.redrawUser("local");
+  undo(){
+    let strokes = this.users[this.userId]
+    if(strokes.length === 0){ return }
+
+    this.undos.push(strokes.pop())
+    this.redrawUser(this.userId)
   }
 
   redo(){ if(this.undos.length === 0){ return }
-    this.stroke.locals.push(this.undos.pop());
-    this.redrawUser("local");
+    let strokes = this.users[this.userId]
+    strokes.push(this.undos.pop())
+    this.redrawUser(this.userId)
   }
 
 
   clear(){
     let canvasSize = this.getCanvasSize();
     this.undos = [];  // TODO: Add clear action to undo
-    this.users = {local: this.buildUser("local", [])}
-    this.lastStrokeIndex = 0
+    this.users = this.buildDefaultUsers(this.userId)
     this.context.clearRect(0, 0, canvasSize.width, canvasSize.height)
     this.redraw()
   }
@@ -258,7 +294,7 @@ class Sketchpad {
     return({
         version: 1,
         aspectRatio: canvasSize.width / canvasSize.height,
-        strokes: {local: this.strokes}
+        users: this.users
     })
   }
 
@@ -279,31 +315,13 @@ class Sketchpad {
   // @param {string} color - Hexadecimal color code
   setLineColor(color){ this.opts.line.color = color }
 
-  // Draw a line
-  // @param  {object} start    - Starting x and y locations
-  // @param  {object} end      - Ending x and y locations
-  // @param  {object} lineOpts - Options for line (color, size, etc.)
-  drawLine(start, end, lineOpts){
-    lineOpts = mergeObjects(this.opts.line, lineOpts);
-    start = this.getPointRelativeToCanvas(start);
-    end = this.getPointRelativeToCanvas(end);
-
-    this.strokes.local.push({
-      points: [start, end],
-      color: lineOpts.color,
-      size: this.getLineSizeRelativeToCanvas(lineOpts.size),
-      cap: lineOpts.cap,
-      join: lineOpts.join,
-      miterLimit: lineOpts.miterLimit
-    });
-    this.redraw();
-  }
-
   putStroke(userId, stroke, lineOpts){
-    stroke = mergeObjects(stroke, lineOpts)
-    if(!this.users[userId]){ this.users[userId] = this.buildUser(userId) }
-    this.users[userId].strokes.push(stroke)
-    this.redrawUser(userId)
+    setTimeout(() => {
+      stroke = mergeObjects(stroke, lineOpts)
+      if(!this.users[userId]){ this.users[userId] = this.buildUser(userId) }
+      this.users[userId].strokes.push(stroke)
+      this.redrawUser(userId)
+    }, 10)
   }
 
   // Resize the canvas maintaining original aspect ratio
@@ -323,8 +341,3 @@ class Sketchpad {
     this.events[event].push(callback)
   }
 }
-
-
-
-
-export default Sketchpad

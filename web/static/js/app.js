@@ -1,5 +1,5 @@
 import "phoenix_html"
-import {Socket} from "phoenix"
+import {Socket, Presence} from "phoenix"
 import {Sketchpad, sanitize} from "./sketchpad"
 
 let App = {
@@ -13,6 +13,8 @@ let App = {
     this.msgContainer = document.getElementById("messages")
     this.msgInput     = document.getElementById("message-input")
     this.el           = document.getElementById("sketchpad")
+    this.usersContainer = document.getElementById("users")
+    this.presences    = {}
 
     this.padChannel.join()
       .receive("ok", ({user_id, data}) => this.onJoin(user_id, data))
@@ -32,6 +34,17 @@ let App = {
     let pad = new Sketchpad(el, userId, {data: padData})
 
     pad.on("stroke", data => padChannel.push("stroke", data) )
+
+    padChannel.on("presence_state", state => {
+      this.presences = Presence.syncState(this.presences, state)
+      this.renderUsers()
+    })
+    padChannel.on("presence_diff", diff => {
+      this.presences = Presence.syncDiff(this.presences, diff,
+                                         this.onPresenceJoin.bind(this),
+                                         this.onPresenceLeave.bind(this))
+      this.renderUsers()
+    })
 
     padChannel.on("stroke", ({user_id, stroke}) => {
       pad.putStroke(user_id, stroke, {color: "#000000"})
@@ -73,6 +86,34 @@ let App = {
         .receive("timeout", onError)
     })
 
+  },
+
+  onPresenceJoin(id, current, newPres){
+    if(!current){
+      console.log("user has entered for the first time", id)
+    } else {
+      console.log("user additional presence", id)
+    }
+  },
+
+  onPresenceLeave(id, current, leftPres){
+    if(current.metas.length === 0){
+      console.log("user has left from all devices", leftPres)
+    } else {
+      console.log("user has left from a devices", leftPres)
+    }
+  },
+
+  renderUsers(){
+    let listBy = (id, {metas: [first, ...rest]}) => {
+      first.count = rest.length + 1 // count of this user's presences
+      first.id = id
+      return first
+    }
+
+    this.usersContainer.innerHTML = Presence.list(this.presences, listBy).map(user => {
+      return `<br/>${sanitize(user.id)} (${sanitize(user.count)})`
+    }).join("")
   }
 }
 

@@ -29,6 +29,7 @@ let App = {
       msgInput,
       msgContainer
     } = this
+
     console.log("rendering...", padData)
 
     let pad = new Sketchpad(el, userId, {data: padData})
@@ -46,13 +47,14 @@ let App = {
       this.renderUsers()
     })
 
+    padChannel.on("pad_request", () => {
+      console.log("got pad request from server")
+      padChannel.push("pad_png", {img: pad.getImageURL()})
+    })
+
     padChannel.on("stroke", ({user_id, stroke}) => {
       pad.putStroke(user_id, stroke, {color: "#000000"})
     })
-
-    setInterval(() => {
-      padChannel.push("ocr", {img: pad.getImageURL()})
-    }, 5000)
 
     clearButton.addEventListener("click", (e) => {
       padChannel.push("clear")

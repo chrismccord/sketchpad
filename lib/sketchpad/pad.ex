@@ -1,5 +1,6 @@
 defmodule Sketchpad.Pad do
   use GenServer
+  alias Sketchpad.{PadChannel}
 
   ## Client
 
@@ -12,7 +13,7 @@ defmodule Sketchpad.Pad do
 
   def put_stroke(pid, pad_id, user_id, stroke) do
     :ok = GenServer.call(pid, {:stroke, user_id, stroke})
-    Sketchpad.PadChannel.broadcast_stroke(pad_id, user_id, stroke)
+    PadChannel.broadcast_stroke(pad_id, user_id, stroke)
   end
 
   def render(pid) do
@@ -21,7 +22,24 @@ defmodule Sketchpad.Pad do
 
   def clear(pid, pad_id) do
     :ok = GenServer.call(pid, :clear)
-    Sketchpad.PadChannel.broadcast_clear(pad_id)
+    PadChannel.broadcast_clear(pad_id)
+  end
+
+  def png_ack(user_id, encoded_img) do
+    with {:ok, decoded_img} <- Base.decode64(encoded_img),
+         {:ok, path} <- Briefly.create(),
+         {:ok, jpg_path} <- Briefly.create(),
+         :ok <- File.write(path, decoded_img),
+         args = ["-background", "white", "-flatten", path, "jpg:" <> jpg_path],
+         {"", 0} <- System.cmd("convert", args),
+         {ascii, 0} = System.cmd("jp2a", ["-i", jpg_path]) do
+
+      IO.puts(user_id)
+      IO.puts(ascii)
+      {:ok, ascii}
+    else
+      _ -> :error
+    end
   end
 
   ## Server
@@ -31,7 +49,18 @@ defmodule Sketchpad.Pad do
   end
 
   def init(pad_id) do
+    Process.send_after(self(), :request_pad_png, 3_000)
     {:ok, %{users: %{}, pad_id: pad_id}}
+  end
+
+  def handle_info(:request_pad_png, %{pad_id: pad_id} = state) do
+    with users when map_size(users) > 0 <- Sketchpad.Presence.list("pad:#{pad_id}"),
+         {_user_id, %{metas: [%{phx_ref: ref} | _]}} = Enum.random(users) do
+
+      Sketchpad.Endpoint.broadcast("pad:#{pad_id}:#{ref}", "pad_request", %{pad_id: pad_id})
+    end
+    Process.send_after(self(), :request_pad_png, 3_000)
+    {:noreply, state}
   end
 
   def handle_call(:clear, _from, state) do

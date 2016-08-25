@@ -23,7 +23,7 @@
     </div> <!-- /container -->
     <script>
       window.userToken = "<%= assigns[:user_token] %>"
-      window.userName = "<%= assigns[:user_id] %>"
+      window.userId = "<%= assigns[:user_id] %>"
     </script>
     <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
   </body>

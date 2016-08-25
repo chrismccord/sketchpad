@@ -1,6 +1,7 @@
 defmodule Sketchpad.PadChannel do
   use Sketchpad.Web, :channel
   alias Sketchpad.{Pad, Presence}
+  alias Phoenix.Socket.Broadcast
 
   def broadcast_stroke(pad_id, user_id, stroke) do
     Sketchpad.Endpoint.broadcast!("pad:#{pad_id}", "stroke", %{
@@ -25,9 +26,15 @@ defmodule Sketchpad.PadChannel do
     {:ok, %{user_id: socket.assigns.user_id, data: %{}}, socket}
   end
 
+  def handle_info(%Broadcast{event: "pad_request"}, socket) do
+    push socket, "pad_request", %{}
+    {:noreply, socket}
+  end
+
   def handle_info(:after_join, socket) do
     push socket, "presence_state", Presence.list(socket)
-    {:ok, _ref} = Presence.track(socket, socket.assigns.user_id, %{})
+    {:ok, ref} = Presence.track(socket, socket.assigns.user_id, %{})
+    :ok = Sketchpad.Endpoint.subscribe("pad:#{socket.assigns.pad_id}:#{ref}")
 
     for item <- Pad.render(socket.assigns.pad), {user_id, %{strokes: strokes}} = item do
       for stroke <- Enum.reverse(strokes) do
@@ -55,18 +62,8 @@ defmodule Sketchpad.PadChannel do
     {:reply, :ok, socket}
   end
 
-
-  def handle_in("ocr", %{"img" => "data:image/png;base64," <> img}, socket) do
-    {:ok, path} = Briefly.create()
-    {:ok, jpg_path} = Briefly.create()
-    File.write!(path, Base.decode64!(img))
-    {"", 0} = System.cmd("convert", ["-background", "white", "-flatten", path, "jpg:" <> jpg_path])
-    {ascii, 0} = System.cmd("jp2a", ["-i", jpg_path])
-    # IO.puts ascii
-    # {txt, _} = System.cmd("tesseract", [path, "stdout", "-l eng"])
-    # IO.inspect txt
-    # broadcast!(socket, "ocr", %{text: txt})
-
-    {:reply, :ok, socket}
+  def handle_in("pad_png", %{"img" => "data:image/png;base64," <> img}, socket) do
+    {:ok, _ascii} = Pad.png_ack(socket.assigns.user_id, img)
+    {:noreply, socket}
   end
 end

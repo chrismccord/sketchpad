@@ -79,7 +79,6 @@ export class Sketchpad {
 
   flushEvents(){
     if(this.eventBuffer){
-      console.log(this.eventBuffer)
       this.getEvents("stroke").forEach(cb => cb(this.eventBuffer.stroke))
       if(this.sketching){ this.startLine(this.eventBuffer.event) }
       this.eventBuffer = null

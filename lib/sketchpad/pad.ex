@@ -11,9 +11,9 @@ defmodule Sketchpad.Pad do
     end
   end
 
-  def put_stroke(pid, pad_id, user_id, stroke) do
+  def put_stroke(from, pid, pad_id, user_id, stroke) do
     :ok = GenServer.call(pid, {:stroke, user_id, stroke})
-    PadChannel.broadcast_stroke(pad_id, user_id, stroke)
+    PadChannel.broadcast_stroke_from(from, pad_id, user_id, stroke)
   end
 
   def render(pid) do

@@ -123,14 +123,14 @@ export class Sketchpad {
 
   getCursorRelativeToCanvas(e) {
     let cur = {};
+    let rect = this.canvas.getBoundingClientRect()
 
     if (this.isTouchEvent(e)) {
-      cur.x = e.touches[0].pageX - this.canvas.offsetLeft;
-      cur.y = e.touches[0].pageY - this.canvas.offsetTop;
+      cur.x = e.touches[0].pageX - rect.left
+      cur.y = e.touches[0].pageY - rect.top
     } else {
-      var rect = this.canvas.getBoundingClientRect();
-      cur.x = e.clientX - rect.left;
-      cur.y = e.clientY - rect.top;
+      cur.x = e.clientX - rect.left
+      cur.y = e.clientY - rect.top
     }
 
     return this.getPointRelativeToCanvas(cur);

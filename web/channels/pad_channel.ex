@@ -3,8 +3,8 @@ defmodule Sketchpad.PadChannel do
   alias Sketchpad.{Pad, Presence}
   alias Phoenix.Socket.Broadcast
 
-  def broadcast_stroke(pad_id, user_id, stroke) do
-    Sketchpad.Endpoint.broadcast!("pad:#{pad_id}", "stroke", %{
+  def broadcast_stroke_from(from, pad_id, user_id, stroke) do
+    Sketchpad.Endpoint.broadcast_from!(from, "pad:#{pad_id}", "stroke", %{
       user_id: user_id,
       stroke: stroke
     })
@@ -51,7 +51,7 @@ defmodule Sketchpad.PadChannel do
 
   def handle_in("stroke", stroke, socket) do
     %{user_id: user_id, pad_id: pad_id, pad: pad} = socket.assigns
-    :ok = Pad.put_stroke(pad, pad_id, user_id, stroke)
+    :ok = Pad.put_stroke(self(), pad, pad_id, user_id, stroke)
 
     {:reply, :ok, socket}
   end

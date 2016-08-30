@@ -1,6 +1,6 @@
 <div class="row">
   <div class="btn-group">
-    <button class="btn btn-primary"><%= @user_id %></button>
+    <button class="btn btn-primary">username</button>
     <button id="clear-button" type="button" class="btn btn-default">clear</button>
     <button id="export-button" type="button" class="btn btn-default">export png</button>
   </div>

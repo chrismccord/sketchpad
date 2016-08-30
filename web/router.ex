@@ -17,6 +17,5 @@ defmodule Sketchpad.Router do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
-    post "/signin", PageController, :signin
   end
 end

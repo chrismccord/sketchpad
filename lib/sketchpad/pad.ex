@@ -54,10 +54,11 @@ defmodule Sketchpad.Pad do
   end
 
   def handle_info(:request_pad_png, %{pad_id: pad_id} = state) do
-    with users when map_size(users) > 0 <- Sketchpad.Presence.list("pad:#{pad_id}"),
-         {_user_id, %{metas: [%{phx_ref: ref} | _]}} = Enum.random(users) do
-
-      Sketchpad.Endpoint.broadcast("pad:#{pad_id}:#{ref}", "pad_request", %{pad_id: pad_id})
+    case Sketchpad.Presence.list("pad:#{pad_id}") do
+      users when map_size(users) > 0 ->
+        {_user_id, %{metas: [%{phx_ref: ref} | _]}} = Enum.random(users)
+        Sketchpad.Endpoint.broadcast("pad:#{pad_id}:#{ref}", "pad_request", %{pad_id: pad_id})
+      _ -> :noop
     end
     Process.send_after(self(), :request_pad_png, 3_000)
     {:noreply, state}

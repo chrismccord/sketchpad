@@ -8,12 +8,3 @@ config :sketchpad, Sketchpad.Endpoint,
 
 # Print only warnings and errors during test
 config :logger, level: :warn
-
-# Configure your database
-config :sketchpad, Sketchpad.Repo,
-  adapter: Ecto.Adapters.Postgres,
-  username: "postgres",
-  password: "postgres",
-  database: "sketchpad_test",
-  hostname: "localhost",
-  pool: Ecto.Adapters.SQL.Sandbox

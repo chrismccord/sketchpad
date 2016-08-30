@@ -15,79 +15,69 @@ let App = {
     this.el           = document.getElementById("sketchpad")
     this.usersContainer = document.getElementById("users")
     this.presences    = {}
+    this.pad          = new Sketchpad(this.el, window.userId)
 
-    this.padChannel.join()
-      .receive("ok", ({user_id, data}) => this.onJoin(user_id, data))
+    this.padChannel.join().receive("ok", ({data}) => {
+      this.pad.loadJSON(data)
+      this.pad.redraw()
+    })
+    this.bind()
   },
 
-  onJoin(userId, padData){
-    let {
-      padChannel,
-      exportButton,
-      clearButton,
-      el,
-      msgInput,
-      msgContainer
-    } = this
+  bind(){
+    this.pad.on("stroke", data => this.padChannel.push("stroke", data) )
 
-    console.log("rendering...", padData)
-
-    let pad = new Sketchpad(el, userId, {data: padData})
-
-    pad.on("stroke", data => padChannel.push("stroke", data) )
-
-    padChannel.on("presence_state", state => {
+    this.padChannel.on("presence_state", state => {
       this.presences = Presence.syncState(this.presences, state)
       this.renderUsers()
     })
-    padChannel.on("presence_diff", diff => {
+    this.padChannel.on("presence_diff", diff => {
       this.presences = Presence.syncDiff(this.presences, diff,
                                          this.onPresenceJoin.bind(this),
                                          this.onPresenceLeave.bind(this))
       this.renderUsers()
     })
 
-    padChannel.on("pad_request", () => {
+    this.padChannel.on("pad_request", () => {
       console.log("got pad request from server")
-      padChannel.push("pad_png", {img: pad.getImageURL()})
+      this.padChannel.push("pad_png", {img: this.pad.getImageURL()})
     })
 
-    padChannel.on("stroke", ({user_id, stroke}) => {
-      pad.putStroke(user_id, stroke, {color: "#000000"})
+    this.padChannel.on("stroke", ({user_id, stroke}) => {
+      this.pad.putStroke(user_id, stroke, {color: "#000000"})
     })
 
-    clearButton.addEventListener("click", (e) => {
-      padChannel.push("clear")
+    this.clearButton.addEventListener("click", (e) => {
+      this.padChannel.push("clear")
     })
 
-    exportButton.addEventListener("click", (e) => {
-      window.open(pad.getImageURL())
+    this.exportButton.addEventListener("click", (e) => {
+      window.open(this.pad.getImageURL())
     })
 
-    padChannel.on("clear", () => pad.clear())
+    this.padChannel.on("clear", () => this.pad.clear())
 
-    padChannel.on("new_msg", ({body: body, user_id: userId}) => {
-      msgContainer.innerHTML += `<br/><b>${sanitize(userId)}</b>: ${sanitize(body)}`
-      msgContainer.scrollTop = msgContainer.scrollHeight
+    this.padChannel.on("new_msg", ({body: body, user_id: userId}) => {
+      this.msgContainer.innerHTML += `<br/><b>${sanitize(userId)}</b>: ${sanitize(body)}`
+      this.msgContainer.scrollTop = this.msgContainer.scrollHeight
     })
 
-    msgInput.addEventListener("keypress", e => {
+    this.msgInput.addEventListener("keypress", e => {
       if(e.keyCode !== 13){ return }
 
       let onOk = () => {
-        msgInput.value = ""
-        msgInput.disabled = false
+        this.msgInput.value = ""
+        this.msgInput.disabled = false
       }
-      let onError = () => { msgInput.disabled = false }
+      let onError = () => { this.msgInput.disabled = false }
 
       e.preventDefault()
-      msgInput.disabled = true
-      padChannel.push("publish_msg", {body: msgInput.value})
+      this.msgInput.disabled = true
+      this.padChannel.push("publish_msg", {body: this.msgInput.value})
         .receive("ok", onOk)
         .receive("error", onError)
         .receive("timeout", onError)
     })
-
   },
 
   onPresenceJoin(id, current, newPres){

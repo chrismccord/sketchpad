@@ -34,8 +34,8 @@ defmodule Sketchpad.Pad do
          {"", 0} <- System.cmd("convert", args),
          {ascii, 0} = System.cmd("jp2a", ["-i", jpg_path]) do
 
-      IO.puts(user_id)
       IO.puts(ascii)
+      IO.puts(">>" <> user_id)
       {:ok, ascii}
     else
       _ -> :error

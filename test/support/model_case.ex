@@ -16,22 +16,11 @@ defmodule Sketchpad.ModelCase do
 
   using do
     quote do
-      alias Sketchpad.Repo
-
-      import Ecto
-      import Ecto.Changeset
-      import Ecto.Query
       import Sketchpad.ModelCase
     end
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Sketchpad.Repo)
-
-    unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(Sketchpad.Repo, {:shared, self()})
-    end
-
     :ok
   end
 

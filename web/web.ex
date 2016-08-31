@@ -16,23 +16,9 @@ defmodule Sketchpad.Web do
   below.
   """
 
-  def model do
-    quote do
-      use Ecto.Schema
-
-      import Ecto
-      import Ecto.Changeset
-      import Ecto.Query
-    end
-  end
-
   def controller do
     quote do
       use Phoenix.Controller
-
-      alias Sketchpad.Repo
-      import Ecto
-      import Ecto.Query
 
       import Sketchpad.Router.Helpers
       import Sketchpad.Gettext
@@ -65,9 +51,6 @@ defmodule Sketchpad.Web do
     quote do
       use Phoenix.Channel
 
-      alias Sketchpad.Repo
-      import Ecto
-      import Ecto.Query
       import Sketchpad.Gettext
     end
   end

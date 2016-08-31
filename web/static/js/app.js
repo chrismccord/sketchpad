@@ -1,5 +1,21 @@
 import "phoenix_html"
-import {Socket, Presence} from "phoenix"
+import {Socket} from "phoenix"
 import {Sketchpad, sanitize} from "./sketchpad"
 
-alert("You're all set!")
+let App = {
+  init(userId, token){ if(!token){ return }
+    let socket = new Socket("/socket", {
+      params: {token: token}
+    })
+    this.sketchpadContainer = document.getElementById("sketchpad")
+    this.pad = new Sketchpad(this.sketchpadContainer, userId)
+    // socket.connect()
+    window.socket = socket
+
+    this.padChannel = socket.channel("pad:lobby")
+    this.padChannel.join()
+      .receive("ok", resp => console.log("joined!", resp) )
+      .receive("error", resp => console.log("join failed!", resp) )
+  }
+}
+App.init(window.userId, window.userToken)

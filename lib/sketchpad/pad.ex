@@ -1,6 +1,6 @@
 defmodule Sketchpad.Pad do
   use GenServer
-  alias Sketchpad.{PadChannel}
+  alias Sketchpad.Web.{PadChannel, Presence, Endpoint}
 
   ## Client
 
@@ -54,10 +54,10 @@ defmodule Sketchpad.Pad do
   end
 
   def handle_info(:request_pad_png, %{pad_id: pad_id} = state) do
-    case Sketchpad.Presence.list("pad:#{pad_id}") do
+    case Presence.list("pad:#{pad_id}") do
       users when map_size(users) > 0 ->
         {_user_id, %{metas: [%{phx_ref: ref} | _]}} = Enum.random(users)
-        Sketchpad.Endpoint.broadcast("pad:#{pad_id}:#{ref}", "pad_request", %{pad_id: pad_id})
+        Endpoint.broadcast("pad:#{pad_id}:#{ref}", "pad_request", %{pad_id: pad_id})
       _ -> :noop
     end
     Process.send_after(self(), :request_pad_png, 3_000)

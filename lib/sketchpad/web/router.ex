@@ -1,4 +1,4 @@
-defmodule Sketchpad.Router do
+defmodule Sketchpad.Web.Router do
   use Sketchpad.Web, :router
 
   pipeline :browser do
@@ -13,7 +13,7 @@ defmodule Sketchpad.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", Sketchpad do
+  scope "/", Sketchpad.Web do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index

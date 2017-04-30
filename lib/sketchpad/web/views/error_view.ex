@@ -1,4 +1,4 @@
-defmodule Sketchpad.ErrorView do
+defmodule Sketchpad.Web.ErrorView do
   use Sketchpad.Web, :view
 
   def render("404.html", _assigns) do

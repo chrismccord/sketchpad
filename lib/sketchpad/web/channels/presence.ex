@@ -1,4 +1,4 @@
-defmodule Sketchpad.Presence do
+defmodule Sketchpad.Web.Presence do
   @moduledoc """
   Provides presence tracking to channels and processes.
 
@@ -9,7 +9,7 @@ defmodule Sketchpad.Presence do
 
   Presences can be tracked in your channel after joining:
 
-      defmodule Sketchpad.MyChannel do
+      defmodule Sketchpad.Web.MyChannel do
         use Sketchpad.Web, :channel
         alias Sketchpad.Presence
 

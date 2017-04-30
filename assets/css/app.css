@@ -1,11 +1,11 @@
 /* This file is for your main application css. */
 
 body {
-  background: #dddddd;
+  background: #dddddd!important;
 }
 
 #sketchpad {
-  background: #ffffff;
+  background: #ffffff!important;
 }
 
 

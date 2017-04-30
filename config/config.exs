@@ -10,10 +10,10 @@ config :sketchpad,
   ecto_repos: [Sketchpad.Repo]
 
 # Configures the endpoint
-config :sketchpad, Sketchpad.Endpoint,
+config :sketchpad, Sketchpad.Web.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "BCqHloAfzORpn/TX90PB9GULWVRZpjwegD4U8T1on/RUmEYTjkVGLC2YKFhkhLiS",
-  render_errors: [view: Sketchpad.ErrorView, accepts: ~w(html json)],
+  render_errors: [view: Sketchpad.Web.ErrorView, accepts: ~w(html json)],
   check_origin: false,
   pubsub: [name: Sketchpad.PubSub,
            adapter: Phoenix.PubSub.PG2]

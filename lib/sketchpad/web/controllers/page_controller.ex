@@ -1,4 +1,4 @@
-defmodule Sketchpad.PageController do
+defmodule Sketchpad.Web.PageController do
   use Sketchpad.Web, :controller
 
   plug :require_user when not action in [:signin]

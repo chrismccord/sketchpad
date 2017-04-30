@@ -18,16 +18,17 @@ defmodule Sketchpad.Web do
 
   def controller do
     quote do
-      use Phoenix.Controller
+      use Phoenix.Controller, namespace: Sketchpad.Web
 
-      import Sketchpad.Router.Helpers
-      import Sketchpad.Gettext
+      import Sketchpad.Web.Router.Helpers
+      import Sketchpad.Web.Gettext
     end
   end
 
   def view do
     quote do
-      use Phoenix.View, root: "web/templates"
+      use Phoenix.View, root: "lib/sketchpad/web/templates",
+                        namespace: MyApp.Web
 
       # Import convenience functions from controllers
       import Phoenix.Controller, only: [get_csrf_token: 0, get_flash: 2, view_module: 1]
@@ -35,9 +36,9 @@ defmodule Sketchpad.Web do
       # Use all HTML functionality (forms, tags, etc)
       use Phoenix.HTML
 
-      import Sketchpad.Router.Helpers
-      import Sketchpad.ErrorHelpers
-      import Sketchpad.Gettext
+      import Sketchpad.Web.Router.Helpers
+      import Sketchpad.Web.ErrorHelpers
+      import Sketchpad.Web.Gettext
     end
   end
 
@@ -51,7 +52,7 @@ defmodule Sketchpad.Web do
     quote do
       use Phoenix.Channel
 
-      import Sketchpad.Gettext
+      import Sketchpad.Web.Gettext
     end
   end
 

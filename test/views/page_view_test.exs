@@ -1,3 +1,3 @@
 defmodule Sketchpad.PageViewTest do
-  use Sketchpad.ConnCase, async: true
+  use Sketchpad.Web.ConnCase, async: true
 end

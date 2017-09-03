@@ -1,4 +1,4 @@
-defmodule Sketchpad.Web.ErrorHelpers do
+defmodule SketchpadWeb.ErrorHelpers do
   @moduledoc """
   Conveniences for translating and building error messages.
   """
@@ -32,9 +32,9 @@ defmodule Sketchpad.Web.ErrorHelpers do
     #     dgettext "errors", "is invalid"
     #
     if count = opts[:count] do
-      Gettext.dngettext(Sketchpad.Web.Gettext, "errors", msg, msg, count, opts)
+      Gettext.dngettext(SketchpadWeb.Gettext, "errors", msg, msg, count, opts)
     else
-      Gettext.dgettext(Sketchpad.Web.Gettext, "errors", msg, opts)
+      Gettext.dgettext(SketchpadWeb.Gettext, "errors", msg, opts)
     end
   end
 end

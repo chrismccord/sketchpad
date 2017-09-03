@@ -1,6 +1,6 @@
 defmodule Sketchpad.Pad do
   use GenServer
-  alias Sketchpad.Web.{PadChannel, Presence, Endpoint}
+  alias SketchpadWeb.{PadChannel, Presence, Endpoint}
 
   ## Client
 

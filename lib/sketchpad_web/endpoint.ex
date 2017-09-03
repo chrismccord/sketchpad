@@ -1,7 +1,7 @@
-defmodule Sketchpad.Web.Endpoint do
+defmodule SketchpadWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :sketchpad
 
-  socket "/socket", Sketchpad.Web.UserSocket
+  socket "/socket", SketchpadWeb.UserSocket
 
   # Serve at "/" the static files from "priv/static" directory.
   #
@@ -38,5 +38,5 @@ defmodule Sketchpad.Web.Endpoint do
     key: "_sketchpad_key",
     signing_salt: "PHwts+Fj"
 
-  plug Sketchpad.Web.Router
+  plug SketchpadWeb.Router
 end

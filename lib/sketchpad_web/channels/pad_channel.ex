@@ -1,17 +1,18 @@
-defmodule Sketchpad.Web.PadChannel do
-  use Sketchpad.Web, :channel
-  alias Sketchpad.{Pad, Web.Presence}
+defmodule SketchpadWeb.PadChannel do
+  use SketchpadWeb, :channel
+  alias Sketchpad.Pad
+  alias SketchpadWeb.Presence
   alias Phoenix.Socket.Broadcast
 
   def broadcast_stroke_from(from, pad_id, user_id, stroke) do
-    Sketchpad.Web.Endpoint.broadcast_from!(from, "pad:#{pad_id}", "stroke", %{
+    SketchpadWeb.Endpoint.broadcast_from!(from, "pad:#{pad_id}", "stroke", %{
       user_id: user_id,
       stroke: stroke
     })
   end
 
   def broadcast_clear(pad_id) do
-    Sketchpad.Web.Endpoint.broadcast!("pad:#{pad_id}", "clear", %{})
+    SketchpadWeb.Endpoint.broadcast!("pad:#{pad_id}", "clear", %{})
   end
 
   def join("pad:" <> id, _params, socket) do
@@ -34,7 +35,7 @@ defmodule Sketchpad.Web.PadChannel do
   def handle_info(:after_join, socket) do
     push socket, "presence_state", Presence.list(socket)
     {:ok, ref} = Presence.track(socket, socket.assigns.user_id, %{})
-    :ok = Sketchpad.Web.Endpoint.subscribe("pad:#{socket.assigns.pad_id}:#{ref}")
+    :ok = SketchpadWeb.Endpoint.subscribe("pad:#{socket.assigns.pad_id}:#{ref}")
 
     for item <- Pad.render(socket.assigns.pad), {user_id, %{strokes: strokes}} = item do
       for stroke <- Enum.reverse(strokes) do

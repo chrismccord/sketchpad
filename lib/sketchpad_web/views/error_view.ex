@@ -1,5 +1,5 @@
-defmodule Sketchpad.Web.ErrorView do
-  use Sketchpad.Web, :view
+defmodule SketchpadWeb.ErrorView do
+  use SketchpadWeb, :view
 
   def render("404.html", _assigns) do
     "Page not found"

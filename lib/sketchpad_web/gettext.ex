@@ -1,4 +1,4 @@
-defmodule Sketchpad.Web.Gettext do
+defmodule SketchpadWeb.Gettext do
   @moduledoc """
   A module providing Internationalization with a gettext-based API.
 

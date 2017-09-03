@@ -1,4 +1,4 @@
-defmodule Sketchpad.Web.ChannelCase do
+defmodule SketchpadWeb.ChannelCase do
   @moduledoc """
   This module defines the test case to be used by
   channel tests.
@@ -21,11 +21,11 @@ defmodule Sketchpad.Web.ChannelCase do
       use Phoenix.ChannelTest
 
       # The default endpoint for testing
-      @endpoint Sketchpad.Web.Endpoint
+      @endpoint SketchpadWeb.Endpoint
     end
   end
 
-  setup tags do
+  setup _tags do
     :ok
   end
 end

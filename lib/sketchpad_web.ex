@@ -1,12 +1,12 @@
-defmodule Sketchpad.Web do
+defmodule SketchpadWeb do
   @moduledoc """
   A module that keeps using definitions for controllers,
   views and so on.
 
   This can be used in your application as:
 
-      use Sketchpad.Web, :controller
-      use Sketchpad.Web, :view
+      use SketchpadWeb, :controller
+      use SketchpadWeb, :view
 
   The definitions below will be executed for every view,
   controller, etc, so keep them short and clean, focused
@@ -18,17 +18,17 @@ defmodule Sketchpad.Web do
 
   def controller do
     quote do
-      use Phoenix.Controller, namespace: Sketchpad.Web
+      use Phoenix.Controller, namespace: SketchpadWeb
 
-      import Sketchpad.Web.Router.Helpers
-      import Sketchpad.Web.Gettext
+      import SketchpadWeb.Router.Helpers
+      import SketchpadWeb.Gettext
     end
   end
 
   def view do
     quote do
-      use Phoenix.View, root: "lib/sketchpad/web/templates",
-                        namespace: MyApp.Web
+      use Phoenix.View, root: "lib/sketchpad_web/templates",
+                        namespace: SketchpadWeb
 
       # Import convenience functions from controllers
       import Phoenix.Controller, only: [get_csrf_token: 0, get_flash: 2, view_module: 1]
@@ -36,9 +36,9 @@ defmodule Sketchpad.Web do
       # Use all HTML functionality (forms, tags, etc)
       use Phoenix.HTML
 
-      import Sketchpad.Web.Router.Helpers
-      import Sketchpad.Web.ErrorHelpers
-      import Sketchpad.Web.Gettext
+      import SketchpadWeb.Router.Helpers
+      import SketchpadWeb.ErrorHelpers
+      import SketchpadWeb.Gettext
     end
   end
 
@@ -52,7 +52,7 @@ defmodule Sketchpad.Web do
     quote do
       use Phoenix.Channel
 
-      import Sketchpad.Web.Gettext
+      import SketchpadWeb.Gettext
     end
   end
 

@@ -1,4 +1,4 @@
-defmodule Sketchpad.Web.ConnCase do
+defmodule SketchpadWeb.ConnCase do
   @moduledoc """
   This module defines the test case to be used by
   tests that require setting up a connection.
@@ -20,14 +20,14 @@ defmodule Sketchpad.Web.ConnCase do
       # Import conveniences for testing with connections
       use Phoenix.ConnTest
 
-      import Sketchpad.Web.Router.Helpers
+      import SketchpadWeb.Router.Helpers
 
       # The default endpoint for testing
-      @endpoint Sketchpad.Web.Endpoint
+      @endpoint SketchpadWeb.Endpoint
     end
   end
 
-  setup tags do
+  setup _tags do
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 end

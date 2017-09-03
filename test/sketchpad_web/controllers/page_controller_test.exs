@@ -1,5 +1,5 @@
-defmodule Sketchpad.PageControllerTest do
-  use Sketchpad.Web.ConnCase
+defmodule SketchpadWeb.PageControllerTest do
+  use SketchpadWeb.ConnCase
 
   test "GET /", %{conn: conn} do
     conn = get conn, "/"

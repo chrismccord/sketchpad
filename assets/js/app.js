@@ -9,7 +9,7 @@ socket.connect()
 let App = {
   init(){
     this.presences = {}
-    this.padChannel = socket.channel("pad:lobby")
+    this.padChannel = socket.channel("pad:lobby", {lastSeenId: 0})
     this.el = document.getElementById("sketchpad")
     this.pad = new Sketchpad(this.el, window.userId)
     this.clearButton = document.getElementById("clear-button")
@@ -38,6 +38,10 @@ let App = {
         .receive("timeout", onError)
     })
 
+    this.padChannel.on("png_request", () => {
+      this.padChannel.push("png_ack", {png: this.pad.getImageURL()})
+        .receive("ok", ({ascii}) => console.log(ascii) )
+    })
 
     this.padChannel.on("new_message", ({user_id, body}) => {
       this.msgContainer.innerHTML +=
@@ -62,7 +66,8 @@ let App = {
       this.padChannel.push("stroke", data)
     })
 
-    this.padChannel.on("stroke", ({user_id, stroke}) => {
+    this.padChannel.on("stroke", ({user_id, stroke, id}) => {
+      this.padChannel.params["lastSeenId"] = id
       this.pad.putStroke(user_id, stroke, {color: "#000000"})
     })
 

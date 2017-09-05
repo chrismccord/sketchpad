@@ -20,5 +20,5 @@ defmodule SketchpadWeb.UserSocket do
     end
   end
 
-  def id(_socket), do: nil
+  def id(socket), do: "user_socket:#{socket.assigns.user_id}"
 end

@@ -2,11 +2,14 @@ defmodule SketchpadWeb.PadChannelTest do
   use SketchpadWeb.ChannelCase
   alias SketchpadWeb.PadChannel
 
-  setup do
+  setup config do
+    topic = to_string(config.test)
+    {:ok, _pad} = Sketchpad.Pad.start_link(topic)
     socket = Phoenix.Socket.assign(socket(), :user_id, "chrismccord")
     assert {:ok, %{msg: "welcome!"}, socket} =
-      subscribe_and_join(socket, PadChannel, "pad:lobby", %{})
-    {:ok, socket: socket}
+      subscribe_and_join(socket, PadChannel, "pad:#{topic}", %{})
+
+    {:ok, topic: topic, socket: socket}
   end
 
   test "clear event is broadcast to everyone but self", %{socket: socket} do

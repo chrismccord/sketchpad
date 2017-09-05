@@ -6,11 +6,11 @@ defmodule SketchpadWeb.PadChannel do
   ## Client
 
   ## Server
-  def join("pad:" <> pad_id, _params, socket) do
+  def join("pad:" <> pad_id, params, socket) do
     {:ok, pid} = Pad.find(pad_id)
     IO.puts ">> #{socket.assigns.user_id} joined pad #{pad_id}"
 
-    send(self(), :after_join)
+    send(self(), {:after_join, params["lastSeenId"] || 0})
 
     socket =
       socket
@@ -20,17 +20,23 @@ defmodule SketchpadWeb.PadChannel do
     {:ok, %{msg: "welcome!"}, socket}
   end
 
-  def handle_info(:after_join, socket) do
+  alias Phoenix.Socket.Broadcast
+
+  def handle_info(%Broadcast{event: "png_request"}, socket) do
+    push(socket, "png_request", %{})
+    {:noreply, socket}
+  end
+
+  def handle_info({:after_join, last_seen_id}, socket) do
     %{pad: pad, user_id: user_id} = socket.assigns
-    {:ok, _} = SketchpadWeb.Presence.track(socket, user_id, %{
+    push(socket, "presence_state", SketchpadWeb.Presence.list(socket))
+    {:ok, ref} = SketchpadWeb.Presence.track(socket, user_id, %{
       online_at: System.system_time()
     })
-    push(socket, "presence_state", SketchpadWeb.Presence.list(socket))
+    :ok = SketchpadWeb.Endpoint.subscribe(socket.topic <> ":#{ref}")
 
-    for {user_id, %{strokes: strokes}} <- Pad.render(pad) do
-      for stroke <- Enum.reverse(strokes) do
-        push(socket, "stroke", %{user_id: user_id, stroke: stroke})
-      end
+    for {user_id, stroke, id} <- Pad.render(pad, last_seen_id) do
+      push(socket, "stroke", %{id: id, user_id: user_id, stroke: stroke})
     end
 
     {:noreply, socket}
@@ -41,6 +47,12 @@ defmodule SketchpadWeb.PadChannel do
       stroke: stroke,
       user_id: user_id
     })
+  end
+
+  @png_prefix "data:image/png;base64,"
+  def handle_in("png_ack", %{"png" => @png_prefix <> png}, socket) do
+    {:ok, ascii} = Pad.png_ack(png, socket.assigns.user_id)
+    {:reply, {:ok, %{ascii: ascii}}, socket}
   end
 
   def handle_in("stroke", stroke, socket) do

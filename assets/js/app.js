@@ -8,6 +8,7 @@ socket.connect()
 
 let App = {
   init(){
+    this.presences = {}
     this.padChannel = socket.channel("pad:lobby")
     this.el = document.getElementById("sketchpad")
     this.pad = new Sketchpad(this.el, window.userId)
@@ -16,6 +17,8 @@ let App = {
     // chat
     this.msgInput = document.getElementById("message-input")
     this.msgContainer = document.getElementById("messages")
+    // presence
+    this.userList = document.getElementById("users")
 
     this.msgInput.addEventListener("keypress", e => {
       if(e.keyCode !== 13){ return }
@@ -34,6 +37,7 @@ let App = {
         .receive("error", onError)
         .receive("timeout", onError)
     })
+
 
     this.padChannel.on("new_message", ({user_id, body}) => {
       this.msgContainer.innerHTML +=
@@ -65,7 +69,52 @@ let App = {
     this.padChannel.join()
       .receive("ok", resp => console.log("joined", resp))
       .receive("error", resp => console.log("failed to join", resp))
+
+
+    this.padChannel.on("presence_state", state => {
+      this.presences = Presence.syncState(this.presences, state)
+      this.renderUsers()
+    })
+
+    this.padChannel.on("presence_diff", diff => {
+      this.presences = Presence.syncDiff(this.presences, diff,
+        this.onPresenceJoin.bind(this),
+        this.onPresenceLeave.bind(this))
+      this.renderUsers()
+    })
+
+  },
+
+  onPresenceJoin(id, current, newPres){
+    if(!current){
+      console.log(`${id} has joined for the first time`)
+    } else {
+      console.log(`${id} has joined from another device (or tab)`)
+    }
+  },
+
+  onPresenceLeave(id, current, leftPres){
+    if(current.metas.length === 0){
+      console.log(`${id} has left the application`)
+    } else {
+      console.log(`${id} has closed a tab or device app`)
+    }
+  },
+
+  renderUsers(){
+    let listBy = (id, {metas: [first, ...rest]}) => {
+      first.count = rest.length + 1
+      first.username = id
+      return first
+    }
+
+    let users = Presence.list(this.presences, listBy)
+    this.userList.innerHTML = users.map(user => {
+      return `<br/>${sanitize(user.username)} (${user.count})`
+    }).join("")
   }
+
+
 }
 
 App.init()

@@ -9,7 +9,8 @@ defmodule Sketchpad.Application do
     # Define workers and child supervisors to be supervised
     children = [
       worker(Sketchpad.Pad, ["lobby"]),
-      supervisor(SketchpadWeb.Endpoint, [])
+      supervisor(SketchpadWeb.Endpoint, []),
+      supervisor(SketchpadWeb.Presence, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

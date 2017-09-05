@@ -8,6 +8,7 @@ defmodule Sketchpad.Application do
 
     # Define workers and child supervisors to be supervised
     children = [
+      worker(Counter, [100]),
       supervisor(SketchpadWeb.Endpoint, [])
     ]
 

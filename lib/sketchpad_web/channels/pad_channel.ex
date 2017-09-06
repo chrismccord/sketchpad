@@ -1,6 +1,7 @@
 defmodule SketchpadWeb.PadChannel do
   use SketchpadWeb, :channel
   alias Sketchpad.Pad
+  alias SketchpadWeb.Presence
 
   @inactive_time :timer.hours(1)
 
@@ -19,6 +20,9 @@ defmodule SketchpadWeb.PadChannel do
   end
 
   def handle_info(:after_join, socket) do
+    push(socket, "presence_state", Presence.list(socket))
+    {:ok, _ref} = Presence.track(socket, socket.assigns.user_id, %{})
+
     for {user_id, %{strokes: strokes}} <- Pad.render(socket.assigns.pad_id) do
       for stroke <- Enum.reverse(strokes) do
         push(socket, "stroke", %{user_id: user_id, stroke: stroke})

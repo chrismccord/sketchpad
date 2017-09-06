@@ -4,8 +4,7 @@ import {Sketchpad, sanitize} from "./sketchpad"
 
 
 let socket = new Socket("/socket", {
-  params: {token: window.userToken},
-  logger: (...args) => { console.log(...args) }
+  params: {token: window.userToken}
 })
 
 socket.connect()
@@ -13,8 +12,10 @@ socket.connect()
 
 let App = {
   init(){
+    this.presences = {}
     this.padChannel = socket.channel("pad:lobby")
     this.el = document.getElementById("sketchpad")
+    this.userContainer = document.getElementById("users")
     this.clearButton = document.getElementById("clear-button")
     this.exportButton = document.getElementById("export-button")
     this.msgInput = document.getElementById("message-input")
@@ -50,6 +51,18 @@ let App = {
     })
 
 
+    this.padChannel.on("presence_state", state => {
+      this.presences = Presence.syncState(this.presences, state)
+      this.renderUsers()
+    })
+
+    this.padChannel.on("presence_diff", diff => {
+      let onJoin = this.onPresenceJoin.bind(this)
+      let onLeave = this.onPresenceLeave.bind(this)
+
+      this.presences = Presence.syncDiff(this.presences, diff, onJoin, onLeave)
+      this.renderUsers()
+    })
 
     this.exportButton.addEventListener("click", e => {
       e.preventDefault()
@@ -75,6 +88,37 @@ let App = {
       .receive("ok", resp => console.log("joined", resp))
       .receive("error", resp => console.log("failed to join", resp))
 
+  },
+
+  renderUsers(){
+    let listBy = (id, {metas: [first, ...rest]}) => {
+      first.username = id
+      first.numConnections = rest.length + 1
+      return first
+    }
+
+    let users = Presence.list(this.presences, listBy)
+
+    this.userContainer.innerHTML = users.map(user => {
+      return `<br/>${sanitize(user.username)} (${user.numConnections})`
+    }).join("")
+
+  },
+
+  onPresenceJoin(id, current, newPres){
+    if(!current){
+      console.log(`${id} has entered the sketchpad`)
+    } else {
+      console.log(`${id} has entered from another device (or tab)`)
+    }
+  },
+
+  onPresenceLeave(id, current, leftPres){
+    if(current.metas.length === 0){
+      console.log(`${id} has left completely`)
+    } else {
+      console.log(`${id} has closed a tab or app`)
+    }
   }
 }
 

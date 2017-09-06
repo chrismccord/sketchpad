@@ -1,5 +1,6 @@
 defmodule Sketchpad.Pad do
   use GenServer
+  alias SketchpadWeb.Endpoint
 
   ## Client
 
@@ -22,10 +23,10 @@ defmodule Sketchpad.Pad do
     |> GenServer.call(:render)
   end
 
-  def put_stroke(pad_id, user_id, stroke) do
+  def put_stroke(pad_id, user_id, stroke, publisher) do
     pad_id
     |> find!()
-    |> GenServer.call({:put_stroke, user_id, stroke})
+    |> GenServer.call({:put_stroke, user_id, stroke, publisher})
   end
 
   ## Server
@@ -49,6 +50,31 @@ defmodule Sketchpad.Pad do
   def handle_call(:render, _from, state) do
     {:reply, state.users, state}
   end
+
+  def handle_call(:clear, _from, state) do
+    Endpoint.broadcast!(state.topic, "clear", %{})
+    {:reply, :ok, %{state | users: %{}}}
+  end
+
+  def handle_call({:put_stroke, user_id, stroke, publisher}, _from, state) do
+    Endpoint.broadcast_from!(publisher, state.topic, "stroke", %{
+      user_id: user_id,
+      stroke: stroke
+    })
+
+    {:reply, :ok, put_user_stroke(state, user_id, stroke)}
+  end
+
+
+  defp put_user_stroke(%{users: users} = state, user_id, stroke) do
+    users =
+      users
+      |> Map.put_new_lazy(user_id, fn -> %{id: user_id, strokes: []} end)
+      |> update_in([user_id, :strokes], fn strokes -> [stroke | strokes] end)
+
+    %{state | users: users}
+  end
+
 
   defp topic(pad_id), do: "pad:#{pad_id}"
 end

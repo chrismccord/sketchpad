@@ -42,6 +42,7 @@ let App = {
         .receive("timeout", onError)
     })
 
+
     this.padChannel.on("new_message", ({user_id, body}) => {
       this.msgContainer.innerHTML +=
         `<br/><b>${sanitize(user_id)}</b>: ${sanitize(body)}`

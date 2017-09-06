@@ -9,6 +9,7 @@ defmodule Sketchpad.Application do
     # Define workers and child supervisors to be supervised
     children = [
       worker(Registry, [[keys: :unique, name: Sketchpad.Registry]]),
+      worker(Sketchpad.Pad, ["lobby"]),
       supervisor(SketchpadWeb.Endpoint, [])
     ]
 

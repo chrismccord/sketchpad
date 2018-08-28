@@ -46,7 +46,8 @@ defmodule Sketchpad.Pad do
 
   ## Server
 
-  def start_link(pad_id) do
+  def start_link(opts) do
+    pad_id = Keyword.fetch!(opts, :pad_id)
     GenServer.start_link(__MODULE__, [pad_id],
       name: {:via, Registry, {Sketchpad.Registry, topic(pad_id)}})
   end
@@ -107,7 +108,6 @@ defmodule Sketchpad.Pad do
 
     %{state | users: users}
   end
-
 
   defp topic(pad_id), do: "pad:#{pad_id}"
 end

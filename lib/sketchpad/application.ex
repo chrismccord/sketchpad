@@ -4,14 +4,12 @@ defmodule Sketchpad.Application do
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
-    import Supervisor.Spec
-
     # Define workers and child supervisors to be supervised
     children = [
-      worker(Registry, [[keys: :unique, name: Sketchpad.Registry]]),
-      supervisor(SketchpadWeb.Endpoint, []),
-      supervisor(SketchpadWeb.Presence, []),
-      worker(Sketchpad.Pad, ["lobby"]),
+      {Registry, keys: :unique, name: Sketchpad.Registry},
+      SketchpadWeb.Endpoint,
+      SketchpadWeb.Presence,
+      {Sketchpad.Pad, pad_id: "lobby"}
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

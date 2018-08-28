@@ -10,18 +10,24 @@ defmodule SketchpadWeb.PadChannel do
     socket =
       socket
       |> assign(:pad_id, pad_id)
-      |> assign(:timer_ref, schedule_shutdown())
+      |> assign(:timer_ref, schedule_shutdown(socket))
 
-    {:ok, %{msg: "welcome!"}, socket}
+    {:ok, %{users: "welcome!"}, socket}
   end
 
   def handle_info(:inactive, socket) do
-    {:stop, :shutdown, socket}
+    {:stop, :normal, socket}
+  end
+
+  def handle_info(:png_request, socket) do
+    push(socket, "png_request", %{})
+    {:noreply, socket}
   end
 
   def handle_info(:after_join, socket) do
     push(socket, "presence_state", Presence.list(socket))
-    {:ok, _ref} = Presence.track(socket, socket.assigns.user_id, %{})
+    {:ok, ref} = Presence.track(socket, socket.assigns.user_id, %{})
+    socket.endpoint.subscribe(socket.topic <> ":#{ref}")
 
     for {user_id, %{strokes: strokes}} <- Pad.render(socket.assigns.pad_id) do
       for stroke <- Enum.reverse(strokes) do
@@ -34,7 +40,7 @@ defmodule SketchpadWeb.PadChannel do
 
   def handle_in(event, data, socket) do
     Process.cancel_timer(socket.assigns.timer_ref)
-    socket = assign(socket, :timer_ref, schedule_shutdown())
+    socket = assign(socket, :timer_ref, schedule_shutdown(socket))
     do_handle_in(event, data, socket)
   end
 
@@ -58,7 +64,19 @@ defmodule SketchpadWeb.PadChannel do
     {:reply, :ok, socket}
   end
 
-  defp schedule_shutdown do
-    Process.send_after(self(), :inactive, @inactive_time)
+
+  @png_prefix "data:image/png;base64,"
+  defp do_handle_in("png_ack", %{"img" => @png_prefix <> img}, socket) do
+    {:ok, ascii} = Pad.png_ack(img)
+
+    IO.puts(ascii)
+    IO.puts(">> #{socket.assigns.user_id}")
+
+    {:reply, {:ok, %{ascii: ascii}}, socket}
+  end
+
+  defp schedule_shutdown(socket) do
+    ms = socket.assigns[:inactive_time] || @inactive_time
+    Process.send_after(self(), :inactive, ms)
   end
 end

@@ -20,7 +20,7 @@ defmodule SketchpadWeb do
     quote do
       use Phoenix.Controller, namespace: SketchpadWeb
 
-      import SketchpadWeb.Router.Helpers
+      alias SketchpadWeb.Router.Helpers, as: Routes
       import SketchpadWeb.Gettext
     end
   end
@@ -36,7 +36,7 @@ defmodule SketchpadWeb do
       # Use all HTML functionality (forms, tags, etc)
       use Phoenix.HTML
 
-      import SketchpadWeb.Router.Helpers
+      alias SketchpadWeb.Router.Helpers, as: Routes
       import SketchpadWeb.ErrorHelpers
       import SketchpadWeb.Gettext
     end

@@ -1,7 +1,7 @@
 defmodule SketchpadWeb.PageController do
   use SketchpadWeb, :controller
 
-  plug :require_user when not action in [:signin]
+  plug :require_user when action not in [:signin]
 
   def index(conn, _params) do
     render conn, "index.html"

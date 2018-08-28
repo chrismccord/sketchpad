@@ -4,6 +4,21 @@ defmodule Sketchpad.Pad do
 
   ## Client
 
+  def png_ack(encoded_png) do
+    with {:ok, decoded_png} <- Base.decode64(encoded_png),
+         {:ok, path} <- Briefly.create(),
+         {:ok, jpeg_path} <- Briefly.create(),
+         :ok <- File.write(path, decoded_png),
+         args = ["-background", "white", "-flatten", path, "jpg:" <> jpeg_path],
+         {"", 0} <- System.cmd("convert", args),
+         {ascii, _} <- System.cmd("jp2a", ["-i", jpeg_path]) do
+
+      {:ok, ascii}
+    else
+      reason -> {:error, reason}
+    end
+  end
+
   def find!(pad_id) do
     case Registry.lookup(Sketchpad.Registry, topic(pad_id)) do
       [{pid, _}] -> pid
@@ -36,7 +51,13 @@ defmodule Sketchpad.Pad do
       name: {:via, Registry, {Sketchpad.Registry, topic(pad_id)}})
   end
 
+  defp schedule_png_request do
+    Process.send_after(self(), :request_png, 3_000)
+  end
+
   def init([pad_id]) do
+    schedule_png_request()
+
     state = %{
       pad_id: pad_id,
       topic: topic(pad_id),
@@ -46,6 +67,18 @@ defmodule Sketchpad.Pad do
     {:ok, state}
   end
 
+  def handle_info(:request_png, state) do
+    case SketchpadWeb.Presence.list(state.topic) do
+      users when map_size(users) > 0 ->
+        {_user_id, %{metas: [%{phx_ref: ref} | _]}} = Enum.random(users)
+        topic = state.topic <> ":#{ref}"
+        Phoenix.PubSub.broadcast(Sketchpad.PubSub, topic, :png_request)
+      _ -> :noop
+    end
+
+    schedule_png_request()
+    {:noreply, state}
+  end
 
   def handle_call(:render, _from, state) do
     {:reply, state.users, state}

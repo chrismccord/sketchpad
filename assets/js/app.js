@@ -84,6 +84,12 @@ let App = {
       this.pad.putStroke(user_id, stroke, {color: "#000000"})
     })
 
+
+    this.padChannel.on("png_request", () => {
+      this.padChannel.push("png_ack", {img: this.pad.getImageURL()})
+        .receive("ok", ({ascii}) => console.log(ascii))
+    })
+
     this.padChannel.join()
       .receive("ok", resp => console.log("joined", resp))
       .receive("error", resp => console.log("failed to join", resp))

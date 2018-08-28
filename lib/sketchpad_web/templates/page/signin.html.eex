@@ -1,6 +1,5 @@
-<%= form_for @conn, page_path(@conn, :signin), [as: :user], fn f -> %>
+<%= form_for @conn, Routes.page_path(@conn, :signin), [as: :user], fn f -> %>
 
   <%= text_input f, :username, placeholder: "Username..." %>
-  <%= submit f, value: "Sketch!" %>
-
+  <%= submit "Sketch!" %>
 <% end %>

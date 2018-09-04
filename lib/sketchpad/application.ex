@@ -10,8 +10,8 @@ defmodule Sketchpad.Application do
     children = [
       {Registry, keys: :unique, name: Sketchpad.Registry},
       SketchpadWeb.Endpoint,
-      SketchpadWeb.Presence,
-      {Sketchpad.Pad, pad_id: "lobby"}
+      {Sketchpad.Pad, pad_id: "lobby"},
+      SketchpadWeb.Presence
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

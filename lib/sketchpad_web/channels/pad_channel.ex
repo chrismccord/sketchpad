@@ -1,6 +1,7 @@
 defmodule SketchpadWeb.PadChannel do
   use SketchpadWeb, :channel
   alias Sketchpad.Pad
+  alias SketchpadWeb.Presence
 
   def broadcast_stroke_from(pid, pad_id, user_id, stroke) do
     SketchpadWeb.Endpoint.broadcast_from!(pid, "pad:#{pad_id}", "stroke", %{
@@ -24,6 +25,7 @@ defmodule SketchpadWeb.PadChannel do
   end
 
   def handle_in("stroke", stroke, socket) do
+    IO.inspect(stroke)
     %{pad_id: pad_id, user_id: user_id} = socket.assigns
     :ok = Pad.stroke(pad_id, user_id, stroke, self())
     # broadcast_stroke_from(self(), pad_id, user_id, stroke)
@@ -63,9 +65,12 @@ defmodule SketchpadWeb.PadChannel do
 
   def handle_info(:after_join, socket) do
     push(socket, "presence_state", Presence.list(socket))
-    {:ok, ref} = Presence.track(socket, socket.assigns.user_id, %{
-      device: "Mobile"
-    })
+
+    {:ok, ref} =
+      Presence.track(socket, socket.assigns.user_id, %{
+        device: "Mobile"
+      })
+
     socket.endpoint.subscribe(socket.topic <> ":#{ref}")
 
     for {user_id, %{strokes: strokes}} <- Pad.render(socket.assigns.pad_id) do

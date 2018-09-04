@@ -14,6 +14,16 @@
 
     <div class="panel panel-default">
       <div class="panel-heading">
+        <h3 class="panel-title">Color Picker</h3>
+      </div>
+      <input id="color" class="jscolor panel-body" style="width:100%;" value="000">
+      <div class="panel-footer">
+
+      </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
         <h3 class="panel-title">Sketchpad Chat</h3>
       </div>
       <div id="messages" class="panel-body">

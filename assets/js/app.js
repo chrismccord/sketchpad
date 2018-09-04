@@ -1,5 +1,6 @@
 import css from "../css/app.css"
 import "phoenix_html"
+import "./jscolor"
 import {Socket, Presence} from "phoenix"
 import {Sketchpad, sanitize} from "./sketchpad"
 
@@ -15,8 +16,9 @@ let App = {
     socket.connect()
     this.padChannel = socket.channel("pad:lobby")
     this.el = document.getElementById("sketchpad")
+    this.colorPicker = document.getElementById("color")
     this.pad = new Sketchpad(this.el, window.username)
-
+    window.pad = this.pad
     this.bind()
 
     this.padChannel.join()
@@ -25,10 +27,17 @@ let App = {
   },
 
   bind(){
-    this.pad.on("stroke", data => this.padChannel.push("stroke", data))
+    this.colorPicker.addEventListener("change", e =>{
+      this.pad.setLineColor("#"+this.colorPicker.value)
+    })
+
+    this.pad.on("stroke", data => {
+      data.color = "#"+this.colorPicker.value
+      this.padChannel.push("stroke", data)
+    })
 
     this.padChannel.on("stroke", ({user_id, stroke}) => {
-      this.pad.putStroke(user_id, stroke, {color: "#000000"})
+      this.pad.putStroke(user_id, stroke, stroke.color)
     })
 
     this.clearButton = document.getElementById("clear-button")

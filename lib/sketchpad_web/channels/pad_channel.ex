@@ -46,11 +46,27 @@ defmodule SketchpadWeb.PadChannel do
     {:reply, :ok, socket}
   end
 
+  @png_prefix "data:image/png;base64,"
+  def handle_in("png_ack", %{"png" => @png_prefix <> img}, socket) do
+    {:ok, ascii} = Pad.png_ack(img)
+    IO.puts(ascii)
+    IO.puts(">> #{socket.assigns.user_id}")
+    {:reply, {:ok, %{ascii: ascii}}, socket}
+  end
+
   alias SketchpadWeb.Presence
+
+  def handle_info(:png_request, socket) do
+    push(socket, "request_png", %{})
+    {:noreply, socket}
+  end
 
   def handle_info(:after_join, socket) do
     push(socket, "presence_state", Presence.list(socket))
-    {:ok, _ref} = Presence.track(socket, socket.assigns.user_id, %{})
+    {:ok, ref} = Presence.track(socket, socket.assigns.user_id, %{
+      device: "Mobile"
+    })
+    socket.endpoint.subscribe(socket.topic <> ":#{ref}")
 
     for {user_id, %{strokes: strokes}} <- Pad.render(socket.assigns.pad_id) do
       for stroke <- Enum.reverse(strokes) do

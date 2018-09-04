@@ -3,7 +3,6 @@ import "phoenix_html"
 import {Socket, Presence} from "phoenix"
 import {Sketchpad, sanitize} from "./sketchpad"
 
-
 let socket = new Socket("/socket", {
   params: {token: window.userToken},
   logger: function(kind, msg, data){
@@ -95,6 +94,11 @@ let App = {
     })
 
     presence.onSync(() => this.renderUsers(presence))
+
+    this.padChannel.on("request_png", () => {
+      this.padChannel.push("png_ack", {png: this.pad.getImageURL()})
+        .receive("ok", ({ascii}) => console.log(ascii))
+    })
   },
 
   renderUsers(presence){

@@ -17,7 +17,7 @@ let App = {
     this.padChannel = socket.channel("pad:lobby")
     this.el = document.getElementById("sketchpad")
     this.pad = new Sketchpad(this.el, window.username)
-   
+
     this.bind()
 
     this.padChannel.join()
@@ -45,9 +45,37 @@ let App = {
       let win = window.open()
       win.document.write(`<img src="${this.pad.getImageURL()}"/>`)
     })
-    
+
     this.padChannel.on("clear", () => this.pad.clear())
+
+    this.msgInput = document.getElementById("message-input")
+    this.msgContainer = document.getElementById("messages")
+
+    this.msgInput.addEventListener("keypress", e => {
+      if(e.keyCode !== 13){ return }
+      let body = this.msgInput.value
+      this.msgInput.disabled = true
+
+      let onOk = () => {
+        this.msgInput.disabled = false
+        this.msgInput.value = ""
+      }
+      let onError = () => {
+        this.msgInput.disabled = false
+      }
+
+      this.padChannel.push("new_message", {body})
+        .receive("ok", onOk)
+        .receive("error", onError)
+        .receive("timeout", onError)
+    })
+
+    this.padChannel.on("new_message", ({user_id, body}) => {
+      this.msgContainer.innerHTML +=
+        `<br/><b>${sanitize(user_id)}</b>: ${sanitize(body)}`
+      this.msgContainer.scrollTop = this.msgContainer.scrollHeight
+    })
   }
 }
 
-App.init()
+if (window.userToken != "") {App.init()}

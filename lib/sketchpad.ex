@@ -1,5 +1,5 @@
 defmodule Sketchpad do
   @moduledoc """
-  Collaborative Sketchpad.
+  THE Collaborative Sketchpad.
   """
 end

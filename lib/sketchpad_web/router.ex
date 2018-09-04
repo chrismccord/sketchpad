@@ -16,6 +16,9 @@ defmodule SketchpadWeb.Router do
   scope "/", SketchpadWeb do
     pipe_through :browser
 
+
     get "/", PageController, :index
+    post "/signin", PageController, :signin
+
   end
 end

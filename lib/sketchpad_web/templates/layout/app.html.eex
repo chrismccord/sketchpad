@@ -21,6 +21,10 @@
       </main>
 
     </div> <!-- /container -->
+    <script>
+      window.username = "<%= assigns[:user_id] %>"
+      window.userToken = "<%= assigns[:user_token] %>"
+    </script>
     <script src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
   </body>
 </html>

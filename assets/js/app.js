@@ -4,4 +4,50 @@ import {Socket, Presence} from "phoenix"
 import {Sketchpad, sanitize} from "./sketchpad"
 
 
-alert("You're all set!")
+let socket = new Socket("/socket", {
+  params: {token: window.userToken},
+  logger: function(kind, msg, data){
+    console.log(`${kind}: ${msg}`, data)
+  }
+})
+
+let App = {
+  init(){
+    socket.connect()
+    this.padChannel = socket.channel("pad:lobby")
+    this.el = document.getElementById("sketchpad")
+    this.pad = new Sketchpad(this.el, window.username)
+   
+    this.bind()
+
+    this.padChannel.join()
+      .receive("ok", resp => console.log("joined!", resp))
+      .receive("error", resp => console.log("failed to join", resp))
+  },
+
+  bind(){
+    this.pad.on("stroke", data => this.padChannel.push("stroke", data))
+
+    this.padChannel.on("stroke", ({user_id, stroke}) => {
+      this.pad.putStroke(user_id, stroke, {color: "#000000"})
+    })
+
+    this.clearButton = document.getElementById("clear-button")
+    this.exportButton = document.getElementById("export-button")
+
+    this.clearButton.addEventListener("click", e => {
+      e.preventDefault()
+      this.padChannel.push("clear", {})
+    })
+
+    this.exportButton.addEventListener("click", e => {
+      e.preventDefault()
+      let win = window.open()
+      win.document.write(`<img src="${this.pad.getImageURL()}"/>`)
+    })
+    
+    this.padChannel.on("clear", () => this.pad.clear())
+  }
+}
+
+App.init()

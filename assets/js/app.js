@@ -75,6 +75,39 @@ let App = {
         `<br/><b>${sanitize(user_id)}</b>: ${sanitize(body)}`
       this.msgContainer.scrollTop = this.msgContainer.scrollHeight
     })
+
+    this.userContainer = document.getElementById("users")
+    let presence = new Presence(this.padChannel)
+    presence.onJoin((id, current, newPres) => {
+      if(!current){
+        console.log(`${id} has entered the sketchpad`)
+      } else {
+        console.log(`${id} has joine from another device`)
+      }
+    })
+
+    presence.onLeave((id, current, leftPres) => {
+      if(current.metas.length === 0) {
+        console.log(`${id} has left completely`)
+      } else {
+        console.log(`${id} has left from a device`)
+      }
+    })
+
+    presence.onSync(() => this.renderUsers(presence))
+  },
+
+  renderUsers(presence){
+    let users = presence.list((id, {color, metas: [first, ...rest]}) => {
+      first.color = color
+      first.username = id
+      first.numConnections = rest.length + 1
+      return first
+    })
+
+    this.userContainer.innerHTML = users.map(user => {
+      return `<br/><span style="color: ${sanitize(user.color)}">${sanitize(user.username)} (${user.numConnections})</span>`
+    }).join("")
   }
 }
 

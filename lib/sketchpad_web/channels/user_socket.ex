@@ -1,6 +1,5 @@
 defmodule SketchpadWeb.UserSocket do
   use Phoenix.Socket
-  require Logger
 
   ## Channels
 
@@ -12,9 +11,11 @@ defmodule SketchpadWeb.UserSocket do
         {:ok, assign(socket, :user_id, user_id)}
 
       {:error, reason} ->
-        Logger.error(fn -> "failed to verify: #{inspect reason}" end)
         :error
     end
+  end
+  def connect(_, socket, _connect_info) do
+    :error
   end
 
   def id(socket), do: "user_socket:#{socket.assigns.user_id}"

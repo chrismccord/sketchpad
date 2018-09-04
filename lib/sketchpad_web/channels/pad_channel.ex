@@ -46,7 +46,12 @@ defmodule SketchpadWeb.PadChannel do
     {:reply, :ok, socket}
   end
 
+  alias SketchpadWeb.Presence
+
   def handle_info(:after_join, socket) do
+    push(socket, "presence_state", Presence.list(socket))
+    {:ok, _ref} = Presence.track(socket, socket.assigns.user_id, %{})
+
     for {user_id, %{strokes: strokes}} <- Pad.render(socket.assigns.pad_id) do
       for stroke <- Enum.reverse(strokes) do
         push(socket, "stroke", %{user_id: user_id, stroke: stroke})

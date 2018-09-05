@@ -35,4 +35,13 @@ defmodule SketchpadWeb.PadChannel do
     broadcast_clear(socket.assigns.pad_id)
     {:reply, :ok, socket}
   end
+
+  def handle_in("new_message", %{"body" => body}, socket) do
+    broadcast!(socket, "new_message", %{
+      user_id: socket.assigns.user_id,
+      body: body
+    })
+
+    {:reply, {:ok, %{hello: "world"}}, socket}
+  end
 end

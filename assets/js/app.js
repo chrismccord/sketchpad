@@ -7,7 +7,7 @@ import {Sketchpad, sanitize} from "./sketchpad"
 let socket = new Socket("/socket", {
   params: {token: window.userToken},
   logger: function(kind, msg, data){
-    console.log(`${kind}: ${msg}`, data)
+    // console.log(`${kind}: ${msg}`, data)
   }
 })
 
@@ -40,13 +40,42 @@ let App = {
       this.padChannel.push("clear", {})
     })
 
-    this.padChannel.on("clear", () => this.pad.clear())
+    // this.padChannel.on("clear", () => this.pad.clear())
 
     this.exportButton.addEventListener("click", e => {
       let win = window.open()
       win.document.write(`<img src="${this.pad.getImageURL()}"/>`)
     })
 
+    this.msgInput = document.getElementById("message-input")
+    this.msgContainer = document.getElementById("messages")
+
+    this.msgInput.addEventListener("keypress", e => {
+      if(e.keyCode != 13) {return}
+      let body = this.msgInput.value
+      this.msgInput.disabled = true
+
+      let onOk = body => {
+        console.log(body)
+        this.msgInput.disabled = false
+        this.msgInput.value = ""
+      }
+
+      let onError = () => {
+        this.msgInput.disabled = false
+      }
+
+      this.padChannel.push("new_message", {body}, 9999999999)
+        .receive("ok", onOk)
+        .receive("error", onError)
+        .receive("timeout", onError)
+    })
+
+    this.padChannel.on("new_message", ({user_id, body}) => {
+      this.msgContainer.innerHTML +=
+        `<br/><b>${sanitize(user_id)}</b>: ${sanitize(body)}`
+      this.msgContainer.scrollTop = this.msgContainer.scrollHeight
+    })
   }
 }
 if(window.userToken !== ""){ App.init() }

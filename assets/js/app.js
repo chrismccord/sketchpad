@@ -40,7 +40,7 @@ let App = {
       this.padChannel.push("clear", {})
     })
 
-    // this.padChannel.on("clear", () => this.pad.clear())
+    this.padChannel.on("clear", () => this.pad.clear())
 
     this.exportButton.addEventListener("click", e => {
       let win = window.open()

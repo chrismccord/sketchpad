@@ -1,6 +1,21 @@
 defmodule Sketchpad.Pad do
   use GenServer
 
+  def png_ack(encoded_png) do
+    with {:ok, decoded_png} <- Base.decode64(encoded_png),
+         {:ok, png_path} <- Briefly.create(),
+         {:ok, jpeg_path} <- Briefly.create(),
+         :ok <- File.write(png_path, decoded_png),
+         args = ["-background", "white", "-flatten", png_path, "jpg:" <> jpeg_path],
+         {"", _} <- System.cmd("convert", args),
+         {ascii, _} <- System.cmd("jp2a", ["-i", jpeg_path]) do
+
+      {:ok, ascii}
+    else
+      reason -> {:error, reason}
+    end
+  end
+
   def clear(pad_id) do
     pad_id
     |> find!()
@@ -38,13 +53,31 @@ defmodule Sketchpad.Pad do
     )
   end
 
+  defp schedule_png_request do
+    Process.send_after(self(), :request_png, :timer.seconds(3))
+  end
+
   def init([pad_id]) do
+    schedule_png_request()
+
     state = %{
       pad_id: pad_id,
       users: %{}
     }
 
     {:ok, state}
+  end
+
+  def handle_info(:request_png, %{pad_id: pad_id} = state) do
+    case SketchpadWeb.Presence.list("pad:#{pad_id}") do
+      users when map_size(users) > 0 ->
+        {_user_id, %{metas: [%{phx_ref: ref} | _]}} = Enum.random(users)
+        Phoenix.PubSub.broadcast(Sketchpad.PubSub, "pad_users:#{ref}", :request_png)
+      _ -> :noop
+    end
+
+    schedule_png_request()
+    {:noreply, state}
   end
 
   def handle_call(:render, _from, state) do

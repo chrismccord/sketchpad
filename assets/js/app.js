@@ -76,6 +76,40 @@ let App = {
         `<br/><b>${sanitize(user_id)}</b>: ${sanitize(body)}`
       this.msgContainer.scrollTop = this.msgContainer.scrollHeight
     })
+
+    let presence = new Presence(this.padChannel)
+    presence.onJoin((id, current, newPresence) => {
+      if(!current){
+        this.msgContainer.innerHTML += `<br/><b>${sanitize(id)} has entered</b>`
+        this.msgContainer.scrollTop = this.msgContainer.scrollHeight
+      }
+    })
+
+    presence.onLeave((id, current, leftPres) => {
+      if(current.metas.length === 0) {
+        this.msgContainer.innerHTML += `<br/><b>${sanitize(id)} has left</b>`
+        this.msgContainer.scrollTop = this.msgContainer.scrollHeight
+      }
+    })
+
+    presence.onSync(() => this.renderUsers(presence))
+
+    this.padChannel.on("request_png", () => {
+      this.padChannel.push("png_ack", {png: this.pad.getImageURL()})
+        .receive("ok", ({ascii}) => console.log(ascii))
+    })
+  },
+
+  renderUsers(presence){
+    let users = presence.list((id, {metas: [first, ...rest]}) => {
+      first.username = id
+      first.numConnections = rest.length + 1
+      return first
+    })
+
+    document.getElementById("users").innerHTML = users.map(user => {
+      return `<br/>${sanitize(user.username)} (${sanitize(user.numConnections)})`
+    }).join("")
   }
 }
 if(window.userToken !== ""){ App.init() }

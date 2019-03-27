@@ -11,7 +11,14 @@ defmodule Sketchpad.Mixfile do
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ]
     ]
   end
 
@@ -39,7 +46,8 @@ defmodule Sketchpad.Mixfile do
       {:jason, "~> 1.0"},
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
-      {:briefly, "~> 0.3"}
+      {:briefly, "~> 0.3"},
+      {:excoveralls, "~> 0.10", only: :test}
     ]
   end
 
